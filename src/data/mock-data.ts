@@ -1,6 +1,6 @@
 export default [
   {
-    jobId: "job-001",
+    id: "job-001",
     startTime: "2025-02-25T08:00:00Z",
     endTime: "2025-02-25T08:05:00Z",
     duration: 300,
@@ -32,7 +32,7 @@ export default [
     ],
   },
   {
-    jobId: "job-002",
+    id: "job-002",
     startTime: "2025-02-25T09:00:00Z",
     endTime: "2025-02-25T09:10:00Z",
     duration: 600,
@@ -64,7 +64,7 @@ export default [
     ],
   },
   {
-    jobId: "job-003",
+    id: "job-003",
     startTime: "2025-02-25T10:15:00Z",
     endTime: "2025-02-25T10:22:00Z",
     duration: 420,
@@ -103,7 +103,7 @@ export default [
     ],
   },
   {
-    jobId: "job-004",
+    id: "job-004",
     startTime: "2025-02-25T11:30:00Z",
     endTime: "2025-02-25T11:45:00Z",
     duration: 900,

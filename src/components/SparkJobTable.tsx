@@ -1,7 +1,4 @@
-"use client";
-
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,6 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import mockData from "../data/mock-data";
 
 interface SparkJobTableProps {
@@ -29,9 +28,7 @@ export function SparkJobTable({
   const itemsPerPage = 10;
 
   const filteredData = mockData.filter((job) => {
-    const matchesSearch = job.jobId
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    const matchesSearch = job.id.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = status === "all" || job.status === status;
     const matchesDateRange =
       !dateRange.startDate ||
@@ -67,8 +64,15 @@ export function SparkJobTable({
         </TableHeader>
         <TableBody>
           {currentData.map((job) => (
-            <TableRow key={job.jobId}>
-              <TableCell className="font-medium">{job.jobId}</TableCell>
+            <TableRow key={job.id}>
+              <TableCell className="font-medium">
+                <Link
+                  to={`/job/${job.id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {job.id}
+                </Link>
+              </TableCell>
               <TableCell>{new Date(job.startTime).toLocaleString()}</TableCell>
               <TableCell>{formatDuration(job.duration)}</TableCell>
               <TableCell>{job.numExecutors}</TableCell>
