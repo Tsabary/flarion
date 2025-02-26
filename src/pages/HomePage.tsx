@@ -1,5 +1,3 @@
-import React from "react";
-
 import { useState } from "react";
 
 import { SparkJobTable } from "@/components/SparkJobTable";
@@ -11,6 +9,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import SparkJobTableFilters from "../components/SparkJobTableFilters";
+import logo from '../assets/flarion-logo.png'
 
 function HomePage() {
   const [search, setSearch] = useState("");
@@ -24,7 +23,8 @@ function HomePage() {
   });
 
   return (
-    <main className="p-8 bg-neutral-900 h-screen flex flex-col overflow-hidden">
+    <main className="p-8 bg-neutral-900 h-screen flex flex-col gap-4 overflow-hidden">
+      <img src={logo} alt="Flarion logo" className="w-32 aspect-auto opacity-50" />
       <Card className="h-full flex-1 flex flex-col bg-neutral-800 border-none">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-white">
