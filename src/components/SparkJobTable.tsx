@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  LoaderCircle,
   ChevronLeft,
   ChevronRight,
+  LoaderCircle,
   RefreshCcw,
 } from "lucide-react";
-import axios from "../config/axios";
 import {
   Table,
   TableBody,
@@ -15,15 +14,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import axios from "../config/axios";
 import SparkJobTableRow from "./SparkJobTableRow";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
+
   useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
     return () => clearTimeout(handler);
   }, [value, delay]);
+
   return debouncedValue;
 }
 
@@ -38,55 +43,38 @@ export function SparkJobTable({
   status,
   dateRange,
 }: SparkJobTableProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerHeight, setContainerHeight] = useState(0);
-  const rowHeight = 36; // Estimated height per row in pixels
-  const [itemsPerPage, setItemsPerPage] = useState(10); // Default value until measured
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [logs, setLogs] = useState<any[]>([]);
-  const [totalFiles, setTotalFiles] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const itemsPerPage = 25;
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [logs, setLogs] = useState<SparkJob[]>([]);
+  const [totalFiles, setTotalFiles] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Measure the container height
-  useEffect(() => {
-    const updateHeight = () => {
-      if (containerRef.current) {
-        const height = containerRef.current.clientHeight;
-        setContainerHeight(height);
-      }
-    };
-
-    updateHeight();
-    window.addEventListener("resize", updateHeight);
-    return () => window.removeEventListener("resize", updateHeight);
-  }, []);
-
-  // Recalculate itemsPerPage whenever containerHeight changes
-  useEffect(() => {
-    const calculatedItems = Math.floor(containerHeight / rowHeight);
-    setItemsPerPage(calculatedItems > 0 ? calculatedItems : 1);
-  }, [containerHeight, rowHeight]);
-
-  // Debounced filters so that API calls are not made on every keystroke/change
+  // Debounced filters
   const debouncedSearch = useDebounce(search, 1000);
   const debouncedStatus = useDebounce(status, 1000);
   const debouncedDateRange = useDebounce(dateRange, 1000);
 
-  // Fetch logs using the calculated itemsPerPage
-  const fetchLogs = async (page: number, size: number) => {
+  const fetchLogs = async (page: number) => {
     setLoading(true);
     setError(null);
     try {
-      const params: Record<string, any> = { page, size };
-      if (debouncedSearch) params.search = debouncedSearch;
-      if (debouncedStatus && debouncedStatus !== "all")
+      const params: Record<string, any> = {
+        page,
+        size: itemsPerPage,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      if (debouncedStatus && debouncedStatus !== "all") {
         params.status = debouncedStatus;
-      if (debouncedDateRange.startDate)
+      }
+      if (debouncedDateRange.startDate) {
         params.startDate = debouncedDateRange.startDate.toISOString();
-      if (debouncedDateRange.endDate)
+      }
+      if (debouncedDateRange.endDate) {
         params.endDate = debouncedDateRange.endDate.toISOString();
+      }
 
       const response = await axios.get("/logs", { params });
       setLogs(response.data.logs);
@@ -99,20 +87,16 @@ export function SparkJobTable({
     }
   };
 
-  // Refetch logs when filters or itemsPerPage changes (once calculated)
+  // Fetch logs when filters change with debounce
   useEffect(() => {
-    if (itemsPerPage > 0) {
-      setCurrentPage(1);
-      fetchLogs(1, itemsPerPage);
-    }
-  }, [debouncedSearch, debouncedStatus, debouncedDateRange, itemsPerPage]);
+    setCurrentPage(1);
+    fetchLogs(1);
+  }, [debouncedSearch, debouncedStatus, debouncedDateRange]);
 
-  // Refetch logs when page changes
+  // Fetch logs when page changes
   useEffect(() => {
-    if (itemsPerPage > 0) {
-      fetchLogs(currentPage, itemsPerPage);
-    }
-  }, [currentPage, itemsPerPage]);
+    fetchLogs(currentPage);
+  }, [currentPage]);
 
   const totalPages = Math.ceil(totalFiles / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
@@ -120,14 +104,11 @@ export function SparkJobTable({
 
   const handleRefresh = () => {
     setCurrentPage(1);
-    fetchLogs(1, itemsPerPage);
+    fetchLogs(1);
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 flex flex-col h-full overflow-hidden"
-    >
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
       {loading ? (
         <div className="flex-1 flex justify-center items-center">
           <LoaderCircle className="h-6 w-6 animate-spin text-white" />
@@ -169,7 +150,7 @@ export function SparkJobTable({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                className="h-7 rounded-md px-2.5 text-xs flex items-center"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
               >
@@ -178,7 +159,7 @@ export function SparkJobTable({
               </Button>
               <Button
                 variant="outline"
-                className="h-7 rounded-md px-2.5 text-xs flex items-center"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
@@ -189,7 +170,7 @@ export function SparkJobTable({
               </Button>
               <Button
                 variant="outline"
-                className="h-7 rounded-md px-2.5 text-xs flex items-center"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
                 onClick={handleRefresh}
               >
                 <RefreshCcw className="size-3" />
@@ -202,5 +183,3 @@ export function SparkJobTable({
     </div>
   );
 }
-
-export default SparkJobTable;
