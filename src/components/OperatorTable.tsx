@@ -13,14 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-interface SparkOperator {
-  operatorId: string;
-  operatorType: string;
-  duration: number;
-  dependencies: string[];
-  errors: string[];
-}
-
 interface OperatorTableProps {
   operators: SparkOperator[];
 }

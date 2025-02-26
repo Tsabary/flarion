@@ -31,10 +31,10 @@ export function DateRangePicker({
     <div className="relative">
       <Button
         variant="outline"
-        className="w-full sm:w-auto"
+        className="w-full sm:w-auto bg-neutral-700 hover:bg-neutral-600 border-none text-neutral-500 hover:text-neutral-500"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Calendar className="mr-2 h-4 w-4" />
+        <Calendar className="mr-2 h-4 w-4 text-neutral-500" />
         {startDate && endDate
           ? `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
           : "Select Date Range"}

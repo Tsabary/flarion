@@ -1,6 +1,5 @@
 // SparkJobTable.tsx
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,20 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import axios from "../config/axios";
-
-interface SparkJob {
-  id: string;
-  startTime: string;
-  endTime: string;
-  duration: number;
-  numExecutors: number;
-  status: string;
-  errors: string[];
-  // ... plus any additional fields
-}
+import SparkJobTableRow from "./SparkJobTableRow";
 
 interface SparkJobTableProps {
   search: string;
@@ -52,13 +40,25 @@ export function SparkJobTable({
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get("/logs", {
-        params: {
-          page,
-          pageSize: itemsPerPage,
-        },
-      });
-      // Expected response shape: { page, pageSize, totalFiles, logs }
+      // Build query parameters, adding filters if provided
+      const params: Record<string, any> = {
+        page,
+        pageSize: itemsPerPage,
+      };
+      if (search) {
+        params.search = search;
+      }
+      if (status && status !== "all") {
+        params.status = status;
+      }
+      if (dateRange.startDate) {
+        params.startDate = dateRange.startDate.toISOString();
+      }
+      if (dateRange.endDate) {
+        params.endDate = dateRange.endDate.toISOString();
+      }
+      const response = await axios.get("/logs", { params });
+      // Expected response shape: { logs: SparkJob[], totalFiles: number, page: number, pageSize: number }
       setLogs(response.data.logs);
       setTotalFiles(response.data.totalFiles);
     } catch (err) {
@@ -69,26 +69,21 @@ export function SparkJobTable({
     }
   };
 
-  // Fetch logs when currentPage changes
+  // When currentPage or filters change, re-fetch logs.
   useEffect(() => {
-    fetchLogs(currentPage);
-  }, [currentPage]);
-
-  // If filters change, reset to page 1 and refetch (assuming you'd extend the API to support filtering)
-  useEffect(() => {
+    // Reset to page 1 if filters change.
     setCurrentPage(1);
     fetchLogs(1);
   }, [search, status, dateRange]);
 
+  // Fetch logs when currentPage changes (if filters haven't just changed)
+  useEffect(() => {
+    fetchLogs(currentPage);
+  }, [currentPage]);
+
   const totalPages = Math.ceil(totalFiles / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, totalFiles);
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
 
   const handleRefresh = () => {
     setCurrentPage(1);
@@ -96,7 +91,7 @@ export function SparkJobTable({
   };
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
       {loading ? (
         <div className="flex-1 flex justify-center items-center">
           <LoaderCircle className="h-6 w-6 animate-spin text-white" />
@@ -105,84 +100,63 @@ export function SparkJobTable({
         <div className="text-center text-red-500 py-4">{error}</div>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job ID</TableHead>
-                <TableHead>Start Time</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Executors</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Errors</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.length > 0 ? (
-                logs.map((job) => (
-                  <TableRow key={job.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        to={`/job/${job.id}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {job.id}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(job.startTime).toLocaleString()}
-                    </TableCell>
-                    <TableCell>{formatDuration(job.duration)}</TableCell>
-                    <TableCell>{job.numExecutors}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          job.status === "success" ? "success" : "destructive"
-                        }
-                      >
-                        {job.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {(job.errors || []).length > 0 ? job.errors[0] : "None"}
+          <div className="flex-1 h-full overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-none">
+                  <TableHead className="w-6" />
+                  <TableHead>Job ID</TableHead>
+                  <TableHead>Start Time</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Executors</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Errors</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.length > 0 ? (
+                  logs.map((job) => <SparkJobTableRow job={job} />)
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      No Spark job logs available.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    No Spark job logs available.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
           <div className="flex justify-between items-center mt-4">
-            <div>
+            <div className="text-neutral-400 text-sm">
               Showing {startIndex}-{endIndex} of {totalFiles} jobs
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
               >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
+                <ChevronLeft className="size-3" />
+                Newer
               </Button>
               <Button
                 variant="outline"
-                size="sm"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
               >
-                Next
-                <ChevronRight className="h-4 w-4" />
+                Older
+                <ChevronRight className="size-3" />
               </Button>
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCcw className="h-4 w-4" />
+              <Button
+                variant="outline"
+                className="h-7 rounded-md px-2.5 text-xs flex items-center bg-neutral-100 hover:bg-neutral-300 text-neutral-900 transition-colors"
+                onClick={handleRefresh}
+              >
+                <RefreshCcw className="size-3" />
                 Refresh
               </Button>
             </div>
