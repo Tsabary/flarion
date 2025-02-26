@@ -10,7 +10,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { OperatorTable } from "@/components/OperatorTable";
-import mockData from "../data/mock-data";
 import { Clock4Icon, CpuIcon } from "lucide-react";
 
 function JobPage() {
@@ -18,7 +17,7 @@ function JobPage() {
   const [job, setJob] = useState<SparkJob | null>();
 
   useEffect(() => {
-    const fetchedJob = mockData.find((j) => j.id !== jobId);
+    const fetchedJob = [].find((j) => j.id !== jobId);
     if (fetchedJob) setJob(fetchedJob);
   }, []);
 
