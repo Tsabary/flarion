@@ -1,4 +1,3 @@
-// SparkJobTable.tsx
 import { useEffect, useState } from "react";
 import {
   ChevronLeft,
@@ -18,6 +17,21 @@ import { Button } from "@/components/ui/button";
 import axios from "../config/axios";
 import SparkJobTableRow from "./SparkJobTableRow";
 
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 interface SparkJobTableProps {
   search: string;
   status: string;
@@ -36,29 +50,33 @@ export function SparkJobTable({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Debounced filters
+  const debouncedSearch = useDebounce(search, 1000);
+  const debouncedStatus = useDebounce(status, 1000);
+  const debouncedDateRange = useDebounce(dateRange, 1000);
+
   const fetchLogs = async (page: number) => {
     setLoading(true);
     setError(null);
     try {
-      // Build query parameters, adding filters if provided
       const params: Record<string, any> = {
         page,
         pageSize: itemsPerPage,
       };
-      if (search) {
-        params.search = search;
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
       }
-      if (status && status !== "all") {
-        params.status = status;
+      if (debouncedStatus && debouncedStatus !== "all") {
+        params.status = debouncedStatus;
       }
-      if (dateRange.startDate) {
-        params.startDate = dateRange.startDate.toISOString();
+      if (debouncedDateRange.startDate) {
+        params.startDate = debouncedDateRange.startDate.toISOString();
       }
-      if (dateRange.endDate) {
-        params.endDate = dateRange.endDate.toISOString();
+      if (debouncedDateRange.endDate) {
+        params.endDate = debouncedDateRange.endDate.toISOString();
       }
+
       const response = await axios.get("/logs", { params });
-      // Expected response shape: { logs: SparkJob[], totalFiles: number, page: number, pageSize: number }
       setLogs(response.data.logs);
       setTotalFiles(response.data.totalFiles);
     } catch (err) {
@@ -69,14 +87,13 @@ export function SparkJobTable({
     }
   };
 
-  // When currentPage or filters change, re-fetch logs.
+  // Fetch logs when filters change with debounce
   useEffect(() => {
-    // Reset to page 1 if filters change.
     setCurrentPage(1);
     fetchLogs(1);
-  }, [search, status, dateRange]);
+  }, [debouncedSearch, debouncedStatus, debouncedDateRange]);
 
-  // Fetch logs when currentPage changes (if filters haven't just changed)
+  // Fetch logs when page changes
   useEffect(() => {
     fetchLogs(currentPage);
   }, [currentPage]);
@@ -115,7 +132,7 @@ export function SparkJobTable({
               </TableHeader>
               <TableBody>
                 {logs.length > 0 ? (
-                  logs.map((job) => <SparkJobTableRow job={job} />)
+                  logs.map((job) => <SparkJobTableRow job={job} key={job.id} />)
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-4">

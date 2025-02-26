@@ -4,6 +4,7 @@ import { MinusSquareIcon, PlusSquareIcon } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 
 import { cn } from "../lib/utils";
+import { OperatorTable } from "./OperatorTable";
 
 interface SparkJobTableRowProps {
   job: SparkJob;
@@ -19,7 +20,10 @@ function SparkJobTableRow({ job }: SparkJobTableRowProps) {
   return (
     <>
       <TableRow
-        className="group text-xs border-none hover:bg-neutral-700 rounded-2xl overflow-hidden"
+        className={cn(
+          "group text-xs border-none hover:bg-neutral-700 rounded-2xl overflow-hidden ",
+          expended ? "bg-blue-500/20 rounded-lg" : ""
+        )}
         key={job.id}
       >
         <TableCell className="opacity-0 group-hover:opacity-100 w-6 p-1">
@@ -82,12 +86,7 @@ function SparkJobTableRow({ job }: SparkJobTableRowProps) {
         <TableRow className="border-none">
           <TableCell colSpan={7} className="p-3">
             <div className="bg-neutral-600 rounded-lg p-3">
-              <h3 className="font-semibold mb-2">Additional Information</h3>
-              <p>This is where you can display more details about</p>
-              <p>
-                You can include any additional information or even other
-                components here.
-              </p>
+              <OperatorTable operators={job.operators} />
             </div>
           </TableCell>
         </TableRow>

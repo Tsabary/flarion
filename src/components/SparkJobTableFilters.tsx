@@ -55,7 +55,7 @@ function SparkJobTableFilters({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col sm:flex-row gap-4 py-2">
       <Input
         placeholder="Search by Job ID or keyword"
         value={search}
